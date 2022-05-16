@@ -1,19 +1,25 @@
 #!/bin/bash
+
 blu='\033[1;34m'
 yel='\033[1;33m'
 bnc='\033[1m'
 ncl='\033[0m'
+
 source /etc/os-release
-if [[ $(lspci) ]]; then
-  gpu=$(lspci | grep "VGA\|3D" | cut -d ":" -f3)
+
+if command -v lspci &> /dev/null ; then
+  export gpu=$(lspci | grep "VGA\|3D" | cut -d ":" -f3)
 else
-  gpu="Unknown"
+  export gpu="Unknown"
 fi
+
 read -r version 2>/dev/null </sys/devices/virtual/dmi/id/product_version
 read -r name 2>/dev/null </sys/devices/virtual/dmi/id/product_name
 read -r mobovendor 2>/dev/null </sys/devices/virtual/dmi/id/board_vendor
 read -r mobo 2>/dev/null </sys/devices/virtual/dmi/id/board_name
+
 host="$mobovendor $name $version $mobo"
+
 getpackages() {
 	local packages="NULL" packagemanager="UNKNOWN"
         if [[ -f "/etc/dpkg/dpkg.cfg" ]] ; then
@@ -50,24 +56,23 @@ getpackages() {
         echo -e "${ncl}${bnc}Packages: ${ncl}${packages} ${packagemanager}"
         return 0
 }
-echo " "
-echo -e "	   ${blu}|   |"
-echo -e " 	   |---|"
-echo -e "	   |   |"
-echo -e "	   |___|"
-echo -e " 	    ${yel}/.\ "
-echo -e " 	    \|/ "
-echo -e "  	     '  "
-echo -e "${ncl}${bnc}Kernel: ${ncl}$(uname -s -r)"
-echo -e "${ncl}${bnc}Host: ${ncl}${host}"
-echo -e "${ncl}${bnc}Operating System: ${ncl}${PRETTY_NAME}"
-echo -e "${ncl}${bnc}Username: ${ncl}$(whoami)"
-echo -e "${ncl}${bnc}Hostname: ${ncl}$(cat /etc/hostname)"
-echo -e "${ncl}${bnc}Architecture: ${ncl}$(uname -m)"
-echo -e "${ncl}${bnc}Shell: ${ncl}${SHELL}"
-echo -e "${ncl}${bnc}Disk Usage: ${ncl}$(df -h | awk '$NF=="/"{printf "%dGB/%dGB (%s)\n", $3,$2,$5}')"
-echo -e "${ncl}${bnc}CPU: ${ncl}$(cat /proc/cpuinfo | grep 'model name' | uniq | cut -c 14-)"
-getpackages
-echo -e "${ncl}${bnc}GPU: ${ncl}${gpu}"
-echo -e "${ncl}${bnc}RAM Usage: ${ncl}$(free -m | awk 'FNR==2{ print $0 }' | awk '{ print $3}')mb"
-echo " "
+
+echo -e "${blu}|   |
+|---|
+|   |
+|___|
+${yel} /.\\
+ \|/
+  ' 
+${ncl}${bnc}Kernel: ${ncl}$(uname -s -r)
+${ncl}${bnc}Host: ${ncl}${host}
+${ncl}${bnc}Operating System: ${ncl}${PRETTY_NAME}
+${ncl}${bnc}Username: ${ncl}$(whoami)
+${ncl}${bnc}Hostname: ${ncl}$(cat /etc/hostname)
+${ncl}${bnc}Architecture: ${ncl}$(uname -m)
+${ncl}${bnc}Shell: ${ncl}${SHELL}
+${ncl}${bnc}Disk Usage: ${ncl}$(df -h 2> /dev/null | awk '$NF=="/"{printf "%dGB/%dGB (%s)\n", $3,$2,$5}')
+${ncl}${bnc}CPU: ${ncl}$(cat /proc/cpuinfo | grep 'model name' | uniq | cut -c 14-)
+$(getpackages)
+${ncl}${bnc}GPU: ${ncl}${gpu}
+${ncl}${bnc}RAM Usage: ${ncl}$(free -m | awk 'FNR==2{ print $0 }' | awk '{ print $3}')mb"
