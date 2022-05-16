@@ -1,0 +1,73 @@
+#!/bin/bash
+blu='\033[1;34m'
+yel='\033[1;33m'
+bnc='\033[1m'
+ncl='\033[0m'
+source /etc/os-release
+if [[ $(lspci) ]]; then
+  gpu=$(lspci | grep "VGA\|3D" | cut -d ":" -f3)
+else
+  gpu="Unknown"
+fi
+read -r version 2>/dev/null </sys/devices/virtual/dmi/id/product_version
+read -r name 2>/dev/null </sys/devices/virtual/dmi/id/product_name
+read -r mobovendor 2>/dev/null </sys/devices/virtual/dmi/id/board_vendor
+read -r mobo 2>/dev/null </sys/devices/virtual/dmi/id/board_name
+host="$mobovendor $name $version $mobo"
+getpackages() {
+	local packages="NULL" packagemanager="UNKNOWN"
+        if [[ -f "/etc/dpkg/dpkg.cfg" ]] ; then
+                local packages="$(dpkg --get-selections | grep -v deinstall | wc -l)"
+                local packagemanager="(dpkg)"
+        elif [[ -f "/etc/pacman.conf" ]] ; then
+                local packages="$(pacman -Q | wc -l)"
+                local packagemanager="(pacman)"
+        elif [[ -f "/etc/apk/repositories" ]] ; then
+                local packages="$(apk list --installed | wc -l)"
+                local packagemanager="(apk)"
+        elif [[ -f "/etc/dnf/dnf.conf" ]] ; then
+                local packages="$(dnf list --installed | grep -c -v '^Installed Packages$')"
+                local packagemanager="(dnf)"
+	elif [[ -f "/etc/zypp/zypp.conf" ]] ; then
+		local packages="$(zypper search -i | wc -l)"
+		local packagemanager="(zypper)"
+	elif [[ -f "/etc/portage/make.conf" ]] ; then
+                local packages="$(q qlist -I | wc -l)"
+                local packagemanager="(emerge)"
+        elif [[ -f "/etc/nixos/configuration.nix" ]] ; then
+                local packages="$(nix-store -q --references /var/run/current-system/sw | cut -d'-' -f2- | wc -l)"
+                local packagemanager="(nix)"
+        elif [[ -d "/etc/xbps.d" ]] ; then
+                local packages="$(xbps-query -l | wc -l)"
+                local packagemanager="(xbps)"
+        elif [[ -d "/var/db/kiss" ]] ; then
+                local packages="$(kiss list | wc -l)"
+                local packagemanager="(kiss)"
+        else
+                echo "Warn: Unknown package management system."
+                return 1
+        fi
+        echo -e "${ncl}${bnc}Packages: ${ncl}${packages} ${packagemanager}"
+        return 0
+}
+echo " "
+echo -e "	   ${blu}|   |"
+echo -e " 	   |---|"
+echo -e "	   |   |"
+echo -e "	   |___|"
+echo -e " 	    ${yel}/.\ "
+echo -e " 	    \|/ "
+echo -e "  	     '  "
+echo -e "${ncl}${bnc}Kernel: ${ncl}$(uname -s -r)"
+echo -e "${ncl}${bnc}Host: ${ncl}${host}"
+echo -e "${ncl}${bnc}Operating System: ${ncl}${PRETTY_NAME}"
+echo -e "${ncl}${bnc}Username: ${ncl}$(whoami)"
+echo -e "${ncl}${bnc}Hostname: ${ncl}$(cat /etc/hostname)"
+echo -e "${ncl}${bnc}Architecture: ${ncl}$(uname -m)"
+echo -e "${ncl}${bnc}Shell: ${ncl}${SHELL}"
+echo -e "${ncl}${bnc}Disk Usage: ${ncl}$(df -h | awk '$NF=="/"{printf "%dGB/%dGB (%s)\n", $3,$2,$5}')"
+echo -e "${ncl}${bnc}CPU: ${ncl}$(cat /proc/cpuinfo | grep 'model name' | uniq | cut -c 14-)"
+getpackages
+echo -e "${ncl}${bnc}GPU: ${ncl}${gpu}"
+echo -e "${ncl}${bnc}RAM Usage: ${ncl}$(free -m | awk 'FNR==2{ print $0 }' | awk '{ print $3}')mb"
+echo " "
