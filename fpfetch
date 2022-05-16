@@ -57,13 +57,15 @@ getpackages() {
         return 0
 }
 
-echo -e "${blu}|   |
-|---|
-|   |
-|___|
-${yel} /.\\
- \|/
-  ' 
+echo -e "
+
+	${blu}|   |
+	|---|
+	|   |
+	|___|
+	${yel} /.\\
+	 \|/
+	  ' 
 ${ncl}${bnc}Kernel: ${ncl}$(uname -s -r)
 ${ncl}${bnc}Host: ${ncl}${host}
 ${ncl}${bnc}Operating System: ${ncl}${PRETTY_NAME}
@@ -76,3 +78,4 @@ ${ncl}${bnc}CPU: ${ncl}$(cat /proc/cpuinfo | grep 'model name' | uniq | cut -c 1
 $(getpackages)
 ${ncl}${bnc}GPU: ${ncl}${gpu}
 ${ncl}${bnc}RAM Usage: ${ncl}$(free -m | awk 'FNR==2{ print $0 }' | awk '{ print $3}')mb"
+echo " "
